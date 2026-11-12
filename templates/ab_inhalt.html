@@ -1,0 +1,137 @@
+{#
+  INHALT DES ARBEITSBLATTS
+  ------------------------
+  Nur diese Datei (und AB_META in app.py) ändern, um ein neues AB zu erstellen.
+
+  Regeln:
+  - Jede Aufgabe ist ein <section class="aufgabe" data-aufgabe="N"> (N = 1, 2, 3 ...).
+  - Eingabefelder bekommen ihre IDs automatisch (Reihenfolge innerhalb der Aufgabe).
+    Daher innerhalb einer Aufgabe die Reihenfolge der Felder nicht mehr ändern,
+    sobald Schüler:innen damit arbeiten.
+  - Text:        <input class="eingabe" type="text">   (kurz: class="eingabe kurz")
+  - Ankreuzen:   <input type="checkbox">
+  - Freitext:    <textarea class="eingabe freitext"></textarea>
+  - Schalenmodell: <div class="bohr-wrap" data-widget="bohr"> ... (siehe Aufgabe 4)
+  - Rand rechts mit "Möchte ich vorstellen" und "Ich brauche Hilfe": {{ rand() }}
+#}
+{% macro rand() %}
+<div class="rand">
+  <label class="vorstellen"><input type="checkbox" data-vorstellen><span>Möchte ich vorstellen<span class="status"></span></span></label>
+  <label class="hilfe"><input type="checkbox" data-hilfe><span>🙋 Ich brauche Hilfe<span class="status"></span></span></label>
+</div>
+{% endmacro %}
+
+<!-- ===== Aufgabe 1 ===== -->
+<section class="aufgabe" data-aufgabe="1">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">1</span> Benzol und Brom</h2>
+    <p><strong>Vervollständigen</strong> Sie den Text. Der Text im Reiter „Original“ hilft Ihnen.</p>
+    <p style="line-height:2.3">
+      Gibt man zu Benzol einige Tropfen Brom, findet zunächst <input class="eingabe luecke" type="text"> Reaktion statt.
+      Erst nach Zugabe eines <input class="eingabe luecke" type="text"> wie Eisen(III)-bromid entfärbt sich das Gemisch.
+      Es entstehen <input class="eingabe luecke" type="text"> und <input class="eingabe luecke" type="text">.
+      Anders als bei den <input class="eingabe luecke" type="text"> findet keine Addition statt, sondern eine
+      elektrophile <input class="eingabe luecke" type="text">. Dabei bleibt der
+      <input class="eingabe luecke" type="text"> Bindungszustand erhalten.
+    </p>
+  </div>
+  {{ rand() }}
+</section>
+
+<!-- ===== Aufgabe 2 ===== -->
+<section class="aufgabe" data-aufgabe="2">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">2</span> Der Mechanismus der Bromierung</h2>
+    <p><strong>Ordnen</strong> Sie jedem Schritt den Fachbegriff zu und <strong>kreuzen</strong> Sie den
+       geschwindigkeitsbestimmenden Schritt an.</p>
+    <table class="ab">
+      <tr><th>Schritt</th><th>Was passiert?</th><th>Fachbegriff</th><th>geschwindigkeits&shy;bestimmend</th></tr>
+      <tr><td class="mitte">1</td><td>Br₂ wird durch die π-Elektronen polarisiert und lagert sich locker an.</td>
+          <td><input class="eingabe" type="text"></td><td class="mitte"><input type="checkbox"></td></tr>
+      <tr><td class="mitte">2</td><td>FeBr₃ spaltet die Br–Br-Bindung heterolytisch; Br bindet über eine σ-Bindung an ein C-Atom. Es entsteht ein Carbenium-Ion.</td>
+          <td><input class="eingabe" type="text"></td><td class="mitte"><input type="checkbox"></td></tr>
+      <tr><td class="mitte">3</td><td>Das Carbenium-Ion gibt ein Proton an FeBr₄⁻ ab. Der aromatische Zustand wird wiederhergestellt.</td>
+          <td><input class="eingabe" type="text"></td><td class="mitte"><input type="checkbox"></td></tr>
+    </table>
+    <p class="hinweis">Tipp: Begriffe zur Auswahl: σ-Komplex · π-Komplex · Rearomatisierung</p>
+  </div>
+  {{ rand() }}
+</section>
+
+<!-- ===== Aufgabe 3 ===== -->
+<section class="aufgabe" data-aufgabe="3">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">3</span> Das Enthalpiediagramm skizzieren</h2>
+    <p><strong>Skizzieren</strong> Sie das Enthalpiediagramm der Bromierung von Benzol auf Ihrer eigenen Tafel:
+       den Weg der <strong>Substitution</strong> als durchgezogene Linie und den möglichen Weg der
+       <strong>Addition</strong> als gestrichelte Linie. <strong>Beschriften</strong> Sie Edukte, Zwischenstufe,
+       Produkte und die Aktivierungsenergien.</p>
+    <div class="skizze-wrap" data-widget="skizze" data-achse-y="ΔH" data-achse-x="Reaktionsverlauf"
+         data-bausteine='["C₆H₆ + Br₂ + FeBr₃", "σ-Komplex + FeBr₄⁻", "C₆H₅Br + HBr + FeBr₃", "C₆H₆Br₂ + FeBr₃", "Substitution", "Addition", "E_A1", "E_A2", "Übergangszustand"]'></div>
+    <p><strong>Erläutern</strong> Sie in zwei bis drei Sätzen, was Ihre Skizze über den Ablauf der Reaktion aussagt.</p>
+    <textarea class="eingabe freitext" rows="3"></textarea>
+  </div>
+  {{ rand() }}
+</section>
+
+<!-- ===== Aufgabe 4 ===== -->
+<section class="aufgabe" data-aufgabe="4">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">4</span> Substitution oder Addition?</h2>
+    <p>Der σ-Komplex könnte auch wie bei Alkenen ein Bromid-Ion addieren. <strong>Vergleichen</strong> Sie beide Wege
+       mithilfe Ihrer Skizze aus Aufgabe 3 und des Textes.</p>
+    <table class="ab">
+      <tr><th>Kriterium</th><th>Substitution</th><th>Addition</th></tr>
+      <tr><td>Aktivierungsenergie des 2. Schritts (klein / groß)</td><td><input class="eingabe" type="text"></td><td><input class="eingabe" type="text"></td></tr>
+      <tr><td>Produkt ist aromatisch (ja / nein)</td><td><input class="eingabe" type="text"></td><td><input class="eingabe" type="text"></td></tr>
+      <tr><td>Reaktion ist (exotherm / endotherm)</td><td><input class="eingabe" type="text"></td><td><input class="eingabe" type="text"></td></tr>
+      <tr><td>Reaktionsentropie (nimmt zu / nimmt ab)</td><td><input class="eingabe" type="text"></td><td><input class="eingabe" type="text"></td></tr>
+    </table>
+  </div>
+  {{ rand() }}
+</section>
+
+<!-- ===== Aufgabe 5 ===== -->
+<section class="aufgabe" data-aufgabe="5">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">5</span> Elektrophile Substitutionen im Überblick</h2>
+    <p><strong>Ergänzen</strong> Sie das angreifende Elektrophil und den Namen des Produkts.</p>
+    <table class="ab">
+      <tr><th>Reaktion</th><th>Reagenz (Katalysator)</th><th>Elektrophil</th><th>Produkt</th></tr>
+      <tr><td>Bromierung</td><td>Br₂ (FeBr₃)</td><td><input class="eingabe" type="text"></td><td><input class="eingabe" type="text"></td></tr>
+      <tr><td>Nitrierung</td><td>HNO₃ (H₂SO₄)</td><td><input class="eingabe" type="text"></td><td><input class="eingabe" type="text"></td></tr>
+      <tr><td>Sulfonierung</td><td>rauchende H₂SO₄ (SO₃)</td><td><input class="eingabe" type="text"></td><td><input class="eingabe" type="text"></td></tr>
+      <tr><td>Friedel-Crafts-Alkylierung</td><td>CH₃Cl (AlCl₃)</td><td><input class="eingabe" type="text"></td><td><input class="eingabe" type="text"></td></tr>
+    </table>
+    <p class="hinweis">Tipp: Ladungen dürfen Sie einfach mit + schreiben, z. B. NO2+.</p>
+  </div>
+  {{ rand() }}
+</section>
+
+<!-- ===== Aufgabe 6 ===== -->
+<section class="aufgabe" data-aufgabe="6">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">6</span> Reaktionsgleichungen</h2>
+    <p><strong>Vervollständigen</strong> Sie die Reaktionsgleichungen. Tiefgestellte Zahlen dürfen Sie normal schreiben (H2O).</p>
+    <p style="line-height:2.6">
+      a) Bildung des Elektrophils in rauchender Schwefelsäure:<br>
+      SO₃ + <input class="eingabe luecke" type="text"> ⇌ <input class="eingabe luecke" type="text"> + HSO₄⁻<br>
+      b) Nitrierung von Benzol (Katalysator H₂SO₄):<br>
+      C₆H₆ + HNO₃ → <input class="eingabe luecke" type="text"> + <input class="eingabe luecke" type="text"><br>
+      c) Friedel-Crafts-Acylierung zu Acetophenon (Katalysator <input class="eingabe luecke" type="text">):<br>
+      C₆H₆ + CH₃COCl → C₆H₅COCH₃ + <input class="eingabe luecke" type="text">
+    </p>
+  </div>
+  {{ rand() }}
+</section>
+
+<!-- ===== Aufgabe 7 ===== -->
+<section class="aufgabe" data-aufgabe="7">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">7</span> Der Mechanismus der Nitrierung</h2>
+    <p><strong>Beschreiben</strong> Sie den Mechanismus der Nitrierung von Benzol in Schritten. Verwenden Sie die
+       Fachbegriffe Nitronium-Ion, π-Komplex, σ-Komplex (Carbenium-Ion) und Rearomatisierung.</p>
+    <textarea class="eingabe freitext" rows="7"></textarea>
+  </div>
+  {{ rand() }}
+</section>

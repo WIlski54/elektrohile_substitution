@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ ab.titel }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ab.css', v=v) }}">
+</head>
+<body class="schueler-ansicht">
+
+<div class="leiste">
+  <div class="links">
+    <span>{{ pseudonym }}</span>
+    <nav class="reiter-leiste" role="tablist" aria-label="Ansicht wählen">
+      <button type="button" class="reiter" role="tab" data-reiter="original">📄 Original</button>
+      <button type="button" class="reiter" role="tab" data-reiter="ab">✏️ Arbeitsblatt</button>
+    </nav>
+  </div>
+  <div class="rechts">
+    <span id="speicher-status" class="speicher">…</span>
+    <a href="{{ url_for('logout') }}">Abmelden</a>
+  </div>
+</div>
+
+{# Reiter „Original“: das Original-AB (Lehrbuchseiten) als Bild – nur Ansicht, keine Eingaben #}
+<section class="original-blatt" id="reiter-original" hidden>
+  <p class="original-hinweis">Original-Material · zum Vergrößern mit zwei Fingern zoomen oder Seite antippen</p>
+  <a href="{{ url_for('static', filename='img/original-1.jpg', v=v) }}" target="_blank" rel="noopener">
+    <img src="{{ url_for('static', filename='img/original-1.jpg', v=v) }}" alt="Original-AB Seite 1: Die elektrophile Substitution – Mechanismus und Enthalpiediagramm der Bromierung von Benzol"></a>
+  <a href="{{ url_for('static', filename='img/original-2.jpg', v=v) }}" target="_blank" rel="noopener">
+    <img src="{{ url_for('static', filename='img/original-2.jpg', v=v) }}" alt="Original-AB Seite 2: Nitrierung, Sulfonierung, Friedel-Crafts-Reaktionen und Aufgaben"></a>
+  <button type="button" class="weiter-zum-ab" data-reiter="ab">Weiter zum Arbeitsblatt ✏️</button>
+</section>
+
+{% include 'ab_blatt.html' %}
+
+<script>
+/* Reiter „Original“ / „Arbeitsblatt“ (Start: Original). Das Blatt bleibt im DOM; beim Wechsel wird ein
+   resize ausgelöst, damit Blattbreite und Zeichenebenen neu berechnet und gemeldet werden. */
+(function () {
+  var orig = document.getElementById('reiter-original'), blatt = document.getElementById('blatt');
+  function zeige(name) {
+    var ab = name === 'ab';
+    orig.hidden = ab;
+    blatt.style.display = ab ? '' : 'none';
+    document.querySelectorAll('.reiter').forEach(function (b) {
+      var an = b.getAttribute('data-reiter') === name;
+      b.classList.toggle('aktiv', an);
+      b.setAttribute('aria-selected', an ? 'true' : 'false');
+    });
+    try { sessionStorage.setItem('ab-reiter', name); } catch (e) {}
+    window.scrollTo(0, 0);
+    setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 30);
+  }
+  window.zeigeReiter = zeige;
+  document.addEventListener('click', function (e) {
+    var k = e.target.closest('[data-reiter]');
+    if (k) { zeige(k.getAttribute('data-reiter')); return; }
+    // Hinweis-Toast (Kommentar, KI-Antwort …) springt ins Arbeitsblatt → vorher dorthin wechseln
+    if (e.target.closest('#kommentar-toast')) { zeige('ab'); }
+  }, true);
+  var start = 'original';
+  try { start = sessionStorage.getItem('ab-reiter') || 'original'; } catch (e) {}
+  zeige(start);
+})();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  window.AB_MODUS = 'schueler';
+  window.AB_WERTE = {{ werte|tojson }};
+  window.AB_VORSTELLEN = {{ vorstellen|tojson }};
+  window.AB_HILFE = {{ hilfe|tojson }};
+  window.AB_ANNOTATIONEN = {{ annotationen|tojson }};
+  window.AB_KI = {{ ki|tojson }};                       // {verlauf, verfuegbar} – nie der Key
+</script>
+<script src="{{ url_for('static', filename='js/ebene.js', v=v) }}"></script>
+<script src="{{ url_for('static', filename='js/skizze.js', v=v) }}"></script>
+<script src="{{ url_for('static', filename='js/ab.js', v=v) }}"></script>
+<script>
+  AB.start(io());
+</script>
+
+{# Digitale Tafel: übernimmt den Bildschirm, solange die Lehrkraft sie live schaltet #}
+<div id="tafel-overlay" hidden><div id="tafel-flaeche"></div></div>
+{% set tafel_ohne_socketio = true %}{% include "_tafel.html" %}
+<script>window.AB_ICH = { id: {{ schueler_id|tojson }}, name: {{ pseudonym|tojson }} };</script>
+<script src="{{ url_for('static', filename='js/tafel_schueler.js', v=v) }}"></script>
+</body>
+</html>
