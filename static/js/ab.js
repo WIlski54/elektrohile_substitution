@@ -378,7 +378,9 @@
       if (LEHRER_EDIT && d.schueler_id !== LEHRER_EDIT.schueler_id) { return; }
       var b = kiBoxen[d.aufgabe];
       if (b) {
-        b.fehler = MODUS === 'schueler' ? 'Die KI antwortet gerade nicht. Versuche es gleich nochmal oder melde Dich bei Deiner Lehrkraft.'
+        b.fehler = MODUS === 'schueler' ? (d.grund === 'tageslimit'
+          ? 'Die KI-Hilfe ist für heute aufgebraucht. Melde Dich bitte bei Deiner Lehrkraft.'
+          : 'Die KI antwortet gerade nicht. Versuche es gleich nochmal oder melde Dich bei Deiner Lehrkraft.')
                                          : 'KI-Fehler (' + d.grund + '): Die Frage wurde nicht beantwortet.';
         kiAktualisieren(d.aufgabe);
       }

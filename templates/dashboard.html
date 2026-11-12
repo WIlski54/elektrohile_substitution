@@ -600,6 +600,7 @@
     test_netz: 'Keine Verbindung zum Anbieter.',
     test_dienst: 'Der Anbieter meldet einen Fehler. Bitte Modellnamen und Key prüfen.',
     test_leer: 'Der Anbieter hat nicht geantwortet. Bitte Modellnamen prüfen.',
+    test_tageslimit: 'Das Tageslimit für KI-Tokens ist für heute aufgebraucht (Zähler startet um Mitternacht neu).',
     kein_key: 'Bitte zuerst einen Key eintragen.',
     ungueltig: 'Diese Eingabe ist nicht gültig (Key ohne Leerzeichen, Modell nur Buchstaben/Zahlen/.-_:).'
   };
@@ -626,7 +627,9 @@
     var mo = document.getElementById('ki-modell');
     mo.placeholder = KI.anbieter_liste[sel.value] ? KI.anbieter_liste[sel.value].modell : '';
     var pille = document.getElementById('ki-pille');
-    pille.textContent = !KI.eingerichtet ? 'nicht eingerichtet' : KI.an ? 'bereit · ' + KI.modell : 'ausgeschaltet';
+    var limit = KI.tageslimit ? ' · heute ' + (KI.verbraucht || 0).toLocaleString('de-DE') + ' / ' + KI.tageslimit.toLocaleString('de-DE') + ' Tokens' : '';
+    var voll = KI.tageslimit && KI.verbraucht >= KI.tageslimit;
+    pille.textContent = !KI.eingerichtet ? 'nicht eingerichtet' : voll ? 'Tageslimit erreicht' + limit : KI.an ? 'bereit · ' + KI.modell + limit : 'ausgeschaltet';
     pille.className = 'ki-pille ' + (KI.verfuegbar ? 'an' : 'aus');
     var knopf = document.getElementById('ki-knopf');
     knopf.textContent = KI.verfuegbar ? '🤖 KI an' : '🤖 KI aus';

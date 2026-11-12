@@ -17,6 +17,7 @@ import datetime
 import math
 import html
 import time
+import threading
 import urllib.request
 import urllib.error
 from contextlib import contextmanager
@@ -1047,17 +1048,63 @@ KI = {
 KI['modell'] = os.environ.get('KI_MODEL') if MODELL_RE.match(os.environ.get('KI_MODEL') or '') \
     else KI_ANBIETER[KI['anbieter']]['modell']
 ki_laeuft = set()            # (schueler_id, aufgabe_nr), solange eine Antwort noch aussteht
+
+# Tageslimit für die KI (Tokens je Kalendertag, Europe/Berlin). 0 / leer = kein Limit.
+# Der Zähler liegt in data/ki_verbrauch.json – getrennt von den Schülerdaten, damit die Auto-Löschung ihn nicht zurücksetzt.
+try:
+    KI_TAGESLIMIT = max(0, int(os.environ.get('KI_TAGESLIMIT_TOKENS') or 0))
+except ValueError:
+    KI_TAGESLIMIT = 0
+KI_VERBRAUCH_DATEI = os.path.join(BASE_DIR, 'data', 'ki_verbrauch.json')
+_ki_verbrauch_lock = threading.Lock()
+
+
+def _heute():
+    return datetime.datetime.now(TZ).strftime('%Y-%m-%d')
+
+
+def ki_verbrauch_heute():
+    with _ki_verbrauch_lock:
+        try:
+            with open(KI_VERBRAUCH_DATEI, encoding='utf-8') as f:
+                d = json.load(f)
+        except (OSError, ValueError):
+            d = {}
+    return int(d.get('tokens', 0)) if d.get('datum') == _heute() else 0
+
+
+def ki_verbrauch_addieren(n):
+    with _ki_verbrauch_lock:
+        try:
+            with open(KI_VERBRAUCH_DATEI, encoding='utf-8') as f:
+                d = json.load(f)
+        except (OSError, ValueError):
+            d = {}
+        if d.get('datum') != _heute():
+            d = {'datum': _heute(), 'tokens': 0}
+        d['tokens'] = int(d.get('tokens', 0)) + max(0, int(n))
+        os.makedirs(os.path.dirname(KI_VERBRAUCH_DATEI), exist_ok=True)
+        tmp = KI_VERBRAUCH_DATEI + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(d, f)
+        os.replace(tmp, KI_VERBRAUCH_DATEI)
+        return d['tokens']
+
+
+def ki_tageslimit_erreicht():
+    return bool(KI_TAGESLIMIT) and ki_verbrauch_heute() >= KI_TAGESLIMIT
 ki_letzte = {}               # schueler_id -> Zeitpunkt der letzten Frage
 
 
 def ki_verfuegbar():
-    return bool(KI['key']) and KI['an']
+    return bool(KI['key']) and KI['an'] and not ki_tageslimit_erreicht()
 
 
 def ki_status():
     """Status für Lehrer-Ansichten. Enthält NIE den Key."""
     return {'eingerichtet': bool(KI['key']), 'an': KI['an'], 'verfuegbar': ki_verfuegbar(),
             'anbieter': KI['anbieter'], 'modell': KI['modell'],
+            'tageslimit': KI_TAGESLIMIT, 'verbraucht': ki_verbrauch_heute(),
             'anbieter_liste': {k: {'name': v['name'], 'modell': v['modell']} for k, v in KI_ANBIETER.items()}}
 
 
@@ -1125,6 +1172,8 @@ def ki_aufruf(system, nachrichten, anbieter=None, modell=None, key=None):
     anbieter = anbieter or KI['anbieter']
     modell = modell or KI['modell']
     key = key or KI['key']
+    if ki_tageslimit_erreicht():
+        raise KiFehler('tageslimit')
     cfg = KI_ANBIETER[anbieter]
     url = cfg['url'].format(modell=modell)
     if anbieter == 'anthropic':
@@ -1155,6 +1204,23 @@ def ki_aufruf(system, nachrichten, anbieter=None, modell=None, key=None):
             text = ''.join(p.get('text', '') for p in antwort['candidates'][0]['content']['parts'])
     except (KeyError, IndexError, TypeError, AttributeError):
         raise KiFehler('dienst')
+    # Verbrauch zählen (Eingabe + Ausgabe); fehlen die Angaben, grob schätzen (≈ 4 Zeichen je Token)
+    try:
+        if anbieter == 'anthropic':
+            u = antwort.get('usage') or {}
+            tokens = int(u.get('input_tokens', 0)) + int(u.get('output_tokens', 0))
+        else:
+            tokens = int((antwort.get('usageMetadata') or {}).get('totalTokenCount', 0))
+    except (TypeError, ValueError):
+        tokens = 0
+    if not tokens:
+        tokens = (len(system) + sum(len(n['text']) for n in nachrichten) + len(text)) // 4
+    vorher_frei = not ki_tageslimit_erreicht()
+    ki_verbrauch_addieren(tokens)
+    if KI_TAGESLIMIT:
+        socketio.emit('ki_status', ki_status(), to='lehrer_room')
+        if vorher_frei and ki_tageslimit_erreicht():
+            ki_status_verteilen()               # Schüler sehen: KI heute nicht mehr verfügbar
     text = text.strip()
     if not text:
         raise KiFehler('leer')
